@@ -1,0 +1,29 @@
+--------------------------------------------
+--Informace o projektu----------------------
+--------------------------------------------
+
+--Jedna se o zjednodussenou databazi knihovny
+--Zakladnimi entitami jsou Ctenar, Kniha a Autor
+--Kazda kniha pak je prave jednoho zanru a vydalo ji prave jedno nakladatelstvi 
+--Kazdy Ctenar si muze (pokud jsou k dispozici) pujcit az 10 knih na dobu maximalne 100 dni (pokud tuto dobu presahne, tak mu nebude umozneno pujcit si dalsi knihu a po vraceni pak bude obsluha upozornena)
+--Vsechny pujcovani a vraceni jsou logovany do archivu
+--Kazdy Ctenar muze po precteni (a vraceni) knihy danou knihy zhodnotit
+
+--podrobne omezujici informace mohou byt nalezeny v integritnich omezenich databaze, triggerech a procedurach
+
+
+---------------------------------------
+--Popis jednotlivych souboru-----------
+---------------------------------------
+
+-code.sql obsahuje shrnuty kod vseho
+
+-tables.sql obsahuje jednotlive prikazy pro vytvoreni tabulek
+-triggers.sql vytvori prislusne triggery (a sekvence)
+-packages.sql vytvori baliky s procedurami a funkcemi
+-views.sql vytvori views
+-demonstracni_data.sql vlozi do tabulek demonstracni data
+-statistika.sql vytvori statistiky pro jednotlive tabulky
+-demonstracni_skript.sql 
+-delete_skript.sql nakonec vse zrusi
+
