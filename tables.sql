@@ -5,9 +5,9 @@
 --Tabulka Ctenar obsahujici jednotlive ctenare registrovane v knihovne
 create table Ctenar(
   IdCten numeric(7,0),
-  JmenoCten varchar2(50) not null,
-  PrijmeniCten varchar2(50) not null,
-  DatumNarozeniCten date not null,
+  Jmeno varchar2(50) not null,
+  Prijmeni varchar2(50) not null,
+  DatumNarozeni date not null,
   Mesto varchar2(50) default null,
   CisloPopisne numeric(5,0) default null,
   Email varchar2(100) not null, 
@@ -41,7 +41,7 @@ create table Nakladatelstvi(
 create table Kniha(
 	IdKnihy numeric(7,0),
 	ISBN varchar2(17) not null,
-	JmenoKnihy varchar2(50) not null,
+	Jmeno varchar2(50) not null,
  	IdZanru numeric(2,0) not null,
  	IdNakl numeric(4,0) not null,
  	Pocet numeric(3,0) default 0 not null,
@@ -60,9 +60,9 @@ create index Kniha_Nakladatelstvi_INX on Kniha(IdNakl);
 --Tabulka autor obsahuje vsechny autory
 create table Autor(
 	IdAutor numeric(6,0),
-	JmenoAut varchar2(50) not null,
- 	PrijmeniAut varchar2(50) not null,
- 	DatumNarozeniAut date not null,
+	Jmeno varchar2(50) not null,
+ 	Prijmeni varchar2(50) not null,
+ 	DatumNarozeni date not null,
  	--
  	constraint Autor_PK primary key (IdAutor)
  );
@@ -79,7 +79,9 @@ create table Napsal(
  );
 
 --indexy pres cizi klice (zanr a nakladatelstvi)
-create index Napsal_Autor_INX on Napsal(IdAutor);
+
+--zastupitelny indexem pres primarni klic
+--create index Napsal_Autor_INX on Napsal(IdAutor); 
 create index Napsal_Kniha_INX on Napsal(IdKnihy);
 
 
@@ -132,5 +134,7 @@ create table Hodnoceni(
  );
 
 --indexy pres cizi klice (IdCtenare a IdKnihy)
-create index Hodnoceni_Ctenar_INX on Hodnoceni(IdCten);
+
+--zastupitelny indexem pres primarni klic
+--create index Hodnoceni_Ctenar_INX on Hodnoceni(IdCten);
 create index Hodnoceni_Kniha_INX on Hodnoceni(IdKnihy);

@@ -6,7 +6,7 @@ Create package db_kniha as
   --pridani nove knihy
   PROCEDURE pridej(
     xisbn      kniha.ISBN%type,
-    xjmenoKnihy   kniha.JmenoKnihy%type,
+    xJmeno   kniha.Jmeno%type,
     xidZanru  kniha.IdZanru%type,
     xIdNakl  kniha.IdNakl%type,
     xPocet kniha.Pocet%type
@@ -19,7 +19,7 @@ Create package db_kniha as
   procedure edit(
     xid   kniha.idKnihy%type,
     xisbn      kniha.ISBN%type default null,
-    xjmenoKnihy   kniha.JmenoKnihy%type default null,
+    xJmeno   kniha.Jmeno%type default null,
     xidZanru  kniha.IdZanru%type default null,
     xIdNakl  kniha.IdNakl%type default null,
     xPocet kniha.Pocet%type default null
@@ -39,6 +39,7 @@ CREATE PACKAGE BODY db_kniha AS
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_neexistujici_zanr_nkl EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
+
  --EXC_datum_spatny_format EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
@@ -47,17 +48,17 @@ CREATE PACKAGE BODY db_kniha AS
 
  PROCEDURE pridej(
     xisbn      kniha.ISBN%type,
-    xjmenoKnihy   kniha.JmenoKnihy%type,
+    xJmeno   kniha.Jmeno%type,
     xidZanru  kniha.IdZanru%type,
     xIdNakl  kniha.IdNakl%type,
     xPocet kniha.Pocet%type
   )
   AS
   begin
-      insert into kniha (ISBN, JmenoKnihy, IdZanru, IdNakl, Pocet)
-        values (xisbn, xjmenoKnihy, xidZanru, xIdNakl, xPocet);
+      insert into kniha (ISBN, Jmeno, IdZanru, IdNakl, Pocet)
+        values (xisbn, xJmeno, xidZanru, xIdNakl, xPocet);
 
-      DBMS_OUTPUT.PUT_LINE ('Nova kniha ' || xjmenoKnihy || ' byla uspesne pridana. Doporucujeme, co nejdrive pridat autory.');
+      DBMS_OUTPUT.PUT_LINE ('Nova kniha ' || xJmeno || ' byla uspesne pridana. Doporucujeme, co nejdrive pridat autory.');
       
    EXCEPTION
     when EXC_prilis_dlouha_hodnota then
@@ -79,7 +80,7 @@ CREATE PACKAGE BODY db_kniha AS
  procedure edit(
     xid   kniha.idKnihy%type,
     xisbn      kniha.ISBN%type default null,
-    xjmenoKnihy   kniha.JmenoKnihy%type default null,
+    xJmeno   kniha.Jmeno%type default null,
     xidZanru  kniha.IdZanru%type default null,
     xIdNakl  kniha.IdNakl%type default null,
     xPocet kniha.Pocet%type default null
@@ -87,7 +88,7 @@ CREATE PACKAGE BODY db_kniha AS
  begin  
    update Kniha set
       isbn = decode(xisbn, null, isbn, xisbn),
-      JmenoKnihy = decode(xjmenoKnihy, null, JmenoKnihy, xjmenoKnihy),
+      Jmeno = decode(xJmeno, null, Jmeno, xJmeno),
       IdZanru = decode(xidZanru, null, IdZanru, xidZanru),
       IdNakl = decode(xIdNakl, null, IdNakl, xIdNakl),
       Pocet = decode(xPocet, null, Pocet, xPocet)
@@ -135,9 +136,9 @@ CREATE PACKAGE BODY db_kniha AS
 Create package db_ctenar as
   --pridani noveho ctenare
   PROCEDURE pridej(
-    xjmeno      ctenar.JmenoCten%type,
-    xprijmeni   ctenar.PrijmeniCten%type,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type,
+    xjmeno      ctenar.Jmeno%type,
+    xprijmeni   ctenar.Prijmeni%type,
+    xdatumNarozeni  ctenar.DatumNarozeni%type,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type
@@ -149,9 +150,9 @@ Create package db_ctenar as
   --editace ctenare
   procedure edit(
     xid   ctenar.idCten%type,
-    xjmeno      ctenar.JmenoCten%type default null,
-    xprijmeni   ctenar.PrijmeniCten%type default null,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type default null,
+    xjmeno      ctenar.Jmeno%type default null,
+    xprijmeni   ctenar.Prijmeni%type default null,
+    xdatumNarozeni  ctenar.DatumNarozeni%type default null,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type default null
@@ -194,23 +195,25 @@ CREATE PACKAGE BODY db_ctenar AS
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
  EXC_neexistujici_cte_kniha EXCEPTION;
+ EXC_kniha_pujcena EXCEPTION;
  --EXC_datum_spatny_format EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
  PRAGMA EXCEPTION_INIT (EXC_neexistujici_cte_kniha, -02291);
+ PRAGMA EXCEPTION_INIT (EXC_kniha_pujcena, -02292);
 
  PROCEDURE pridej(
-    xjmeno      ctenar.JmenoCten%type,
-    xprijmeni   ctenar.PrijmeniCten%type,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type,
+    xjmeno      ctenar.Jmeno%type,
+    xprijmeni   ctenar.Prijmeni%type,
+    xdatumNarozeni  ctenar.DatumNarozeni%type,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type
   )
   AS
   begin
-      insert into ctenar (JmenoCten, PrijmeniCten, DatumNarozeniCten, Mesto, CisloPopisne, Email)
+      insert into ctenar (Jmeno, Prijmeni, DatumNarozeni, Mesto, CisloPopisne, Email)
         values (xjmeno, xprijmeni, xdatumNarozeni, xmesto, xcisloPopisne, lower(xemail));
 
       DBMS_OUTPUT.PUT_LINE ('Novy ctenar ' || xjmeno || ' ' || xprijmeni || ' byl uspesne pridan.');
@@ -227,23 +230,25 @@ CREATE PACKAGE BODY db_ctenar AS
  as
  begin
   delete from ctenar where idCten = xid;
-    --trigger se postara o to, abychom nemazali uzivatele, ktery ma neco pujceneho
+  EXCEPTION
+    when EXC_kniha_pujcena then
+      RAISE_APPLICATION_ERROR (-20071,'Ctenar ma pujcenou nejakou knihu. Nelze tudiz smazat.');
  end;
 
  procedure edit(
     xid   ctenar.idCten%type,
-    xjmeno      ctenar.JmenoCten%type default null,
-    xprijmeni   ctenar.PrijmeniCten%type default null,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type default null,
+    xjmeno      ctenar.Jmeno%type default null,
+    xprijmeni   ctenar.Prijmeni%type default null,
+    xdatumNarozeni  ctenar.DatumNarozeni%type default null,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type default null
   ) as 
  begin  
    update Ctenar set
-      JmenoCten = decode(xjmeno, null, JmenoCten, xjmeno),
-      PrijmeniCten = decode(xprijmeni, null, PrijmeniCten, xprijmeni),
-      DatumNarozeniCten = decode(xdatumNarozeni, null, DatumNarozeniCten, xdatumNarozeni),
+      Jmeno = decode(xjmeno, null, Jmeno, xjmeno),
+      Prijmeni = decode(xprijmeni, null, Prijmeni, xprijmeni),
+      DatumNarozeni = decode(xdatumNarozeni, null, DatumNarozeni, xdatumNarozeni),
       Mesto = decode(xmesto, null, Mesto, 'null', null, xmesto),
       CisloPopisne = decode(xcisloPopisne, null, CisloPopisne, 'null', null, xcisloPopisne),
       Email = decode(xemail, null, email, lower(xemail))
@@ -359,9 +364,11 @@ CREATE PACKAGE BODY db_zanr AS
  --provazani s vyjimkami, ktere vyhazuje db
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
+ EXC_zanr_prirazen EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
+ PRAGMA EXCEPTION_INIT (EXC_zanr_prirazen, -02292);
 
  PROCEDURE pridej(
     xnazevZanru zanr.NazevZanru%type
@@ -385,7 +392,9 @@ CREATE PACKAGE BODY db_zanr AS
  as
  begin
   delete from zanr where IdZanru = xid;
-    --trigger se postara o to, abychom nesmazali zanr, pokud je uveden u nektere knihy
+  EXCEPTION
+    when EXC_zanr_prirazen then
+      RAISE_APPLICATION_ERROR (-20071,'Zanr je prirazen nektere knize, nelze tudiz smazat.');
  end;
 
  procedure edit(
@@ -444,9 +453,11 @@ CREATE PACKAGE BODY db_nakladatelstvi AS
  --provazani s vyjimkami, ktere vyhazuje db
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
+ EXC_nakl_prirazeno EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
+ PRAGMA EXCEPTION_INIT (EXC_nakl_prirazeno, -02292);
 
  PROCEDURE pridej(
     xnazevNakl nakladatelstvi.NazevNakl%type
@@ -470,7 +481,9 @@ CREATE PACKAGE BODY db_nakladatelstvi AS
  as
  begin
   delete from nakladatelstvi where IdNakl = xid;
-    --trigger se postara o to, abychom nesmazali nakladatelstvi, pokud je uvedeno u nektere knihy
+  EXCEPTION
+    when EXC_nakl_prirazeno then
+      RAISE_APPLICATION_ERROR (-20071,'Nakladatelstvi je prirazeno nektere knize, nelze tudiz smazat.');
  end; --odeber
 
  procedure edit(
@@ -507,9 +520,9 @@ CREATE PACKAGE BODY db_nakladatelstvi AS
 Create package db_autor as
   --pridani noveho autora
   PROCEDURE pridej(
-    xjmenoAut      autor.JmenoAut%type,
-    xprijmeniAut   autor.PrijmeniAut%type,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type
+    xJmeno      autor.Jmeno%type,
+    xPrijmeni   autor.Prijmeni%type,
+    xDatumNarozeni  autor.DatumNarozeni%type
   );
 
   --odebrani autora dle ID
@@ -518,9 +531,9 @@ Create package db_autor as
   --editace autora
   procedure edit(
     xid   autor.IdAutor%type,
-    xjmenoAut      autor.JmenoAut%type default null,
-    xprijmeniAut   autor.PrijmeniAut%type default null,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type default null
+    xJmeno      autor.Jmeno%type default null,
+    xPrijmeni   autor.Prijmeni%type default null,
+    xDatumNarozeni  autor.DatumNarozeni%type default null
   );
 
   --s danym autorem asociuje autorstvi dane knihy
@@ -550,16 +563,16 @@ CREATE PACKAGE BODY db_autor AS
  PRAGMA EXCEPTION_INIT (EXC_neexistujici_aut_kniha, -02291);
 
  PROCEDURE pridej(
-    xjmenoAut      autor.JmenoAut%type,
-    xprijmeniAut   autor.PrijmeniAut%type,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type
+    xJmeno      autor.Jmeno%type,
+    xPrijmeni   autor.Prijmeni%type,
+    xDatumNarozeni  autor.DatumNarozeni%type
   )
   AS
   begin
-      insert into autor (JmenoAut, PrijmeniAut, DatumNarozeniAut)
-        values (xjmenoAut, xprijmeniAut, xdatumNarozeniAut);
+      insert into autor (Jmeno, Prijmeni, DatumNarozeni)
+        values (xJmeno, xPrijmeni, xDatumNarozeni);
 
-      DBMS_OUTPUT.PUT_LINE ('Novy autor ' || xjmenoAut || ' ' || xprijmeniAut || ' byl uspesne pridan.');
+      DBMS_OUTPUT.PUT_LINE ('Novy autor ' || xJmeno || ' ' || xPrijmeni || ' byl uspesne pridan.');
       
   EXCEPTION
     when EXC_prilis_dlouha_hodnota then
@@ -576,15 +589,15 @@ CREATE PACKAGE BODY db_autor AS
 
  procedure edit(
     xid   autor.IdAutor%type,
-    xjmenoAut      autor.JmenoAut%type default null,
-    xprijmeniAut   autor.PrijmeniAut%type default null,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type default null
+    xJmeno      autor.Jmeno%type default null,
+    xPrijmeni   autor.Prijmeni%type default null,
+    xDatumNarozeni  autor.DatumNarozeni%type default null
   ) as 
  begin  
    update Autor set
-      JmenoAut = decode(xjmenoAut, null, JmenoAut, xjmenoAut),
-      PrijmeniAut = decode(xprijmeniAut, null, PrijmeniAut, xprijmeniAut),
-      DatumNarozeniAut = decode(xdatumNarozeniAut, null, DatumNarozeniAut, xdatumNarozeniAut)
+      Jmeno = decode(xJmeno, null, Jmeno, xJmeno),
+      Prijmeni = decode(xPrijmeni, null, Prijmeni, xPrijmeni),
+      DatumNarozeni = decode(xDatumNarozeni, null, DatumNarozeni, xDatumNarozeni)
     where IdAutor=xid;
 
     EXCEPTION

@@ -1,3 +1,7 @@
+-----------------------
+--Ruseni tabulek,...---
+-----------------------
+
 --dropovani statistik
 analyze TABLE archiv delete statistics;
 analyze TABLE autor delete statistics;
@@ -40,31 +44,31 @@ drop sequence SEQ_VYPUJCKY_ID;
 drop sequence SEQ_ZANR_ID;
 
 --select 'drop trigger ' || trigger_name || ';' from user_triggers;
-drop trigger BEF_INS_VYPUJCKY_ID;            
-drop trigger BEF_INS_VYPUJCKY;               
-drop trigger AFT_INS_DEL_VYPUJCKY;           
-drop trigger BEF_INS_ARCHIV_ID;              
-drop trigger BEF_INS_AUTOR_ID;               
-drop trigger BEF_INS_HODNOCENI;              
-drop trigger BEF_INS_KNIHA_ID;               
-drop trigger BEF_DEL_UPD_KNIHA;              
-drop trigger BEF_INS_NAKLADATELSTVI_ID;      
-drop trigger BEF_DEL_NAKLADATELSTVI;         
-drop trigger BEF_INS_ZANR_ID;                
-drop trigger BEF_DEL_ZANR;                   
-drop trigger BEF_INS_CTENAR_ID;              
-drop trigger BEF_DEL_CTENAR;                 
+-- drop trigger BEF_INS_VYPUJCKY_ID;            
+-- drop trigger BEF_INS_VYPUJCKY;               
+-- drop trigger AFT_INS_DEL_VYPUJCKY;           
+-- drop trigger BEF_INS_ARCHIV_ID;              
+-- drop trigger BEF_INS_AUTOR_ID;               
+-- drop trigger BEF_INS_HODNOCENI;              
+-- drop trigger BEF_INS_KNIHA_ID;               
+-- drop trigger BEF_DEL_UPD_KNIHA;              
+-- drop trigger BEF_INS_NAKLADATELSTVI_ID;      
+-- drop trigger BEF_DEL_NAKLADATELSTVI;         
+-- drop trigger BEF_INS_ZANR_ID;                
+-- drop trigger BEF_DEL_ZANR;                   
+-- drop trigger BEF_INS_CTENAR_ID;              
+-- drop trigger BEF_DEL_CTENAR;                 
              
-drop index KNIHA_ZANR_INX;                 
-drop index KNIHA_NAKLADATELSTVI_INX;                
-drop index NAPSAL_AUTOR_INX;               
-drop index NAPSAL_KNIHA_INX;               
-drop index VYPUCKY_CTENAR_INX;             
-drop index VYPUJCKY_KNIHA_INX;             
-drop index ARCHIV_CTENAR_INX;              
-drop index ARCHIV_KNIHA_INX;               
-drop index HODNOCENI_CTENAR_INX;           
-drop index HODNOCENI_KNIHA_INX;  
+-- drop index KNIHA_ZANR_INX;                 
+-- drop index KNIHA_NAKLADATELSTVI_INX;                
+-- drop index NAPSAL_AUTOR_INX;               
+-- drop index NAPSAL_KNIHA_INX;               
+-- drop index VYPUCKY_CTENAR_INX;             
+-- drop index VYPUJCKY_KNIHA_INX;             
+-- drop index ARCHIV_CTENAR_INX;              
+-- drop index ARCHIV_KNIHA_INX;               
+-- drop index HODNOCENI_CTENAR_INX;           
+-- drop index HODNOCENI_KNIHA_INX;  
 
 --select 'drop table ' || table_name || ';' from user_tables;
 drop table VYPUJCKY;

@@ -14,9 +14,9 @@
 --Tabulka Ctenar obsahujici jednotlive ctenare registrovane v knihovne
 create table Ctenar(
   IdCten numeric(7,0),
-  JmenoCten varchar2(50) not null,
-  PrijmeniCten varchar2(50) not null,
-  DatumNarozeniCten date not null,
+  Jmeno varchar2(50) not null,
+  Prijmeni varchar2(50) not null,
+  DatumNarozeni date not null,
   Mesto varchar2(50) default null,
   CisloPopisne numeric(5,0) default null,
   Email varchar2(100) not null, 
@@ -50,7 +50,7 @@ create table Nakladatelstvi(
 create table Kniha(
 	IdKnihy numeric(7,0),
 	ISBN varchar2(17) not null,
-	JmenoKnihy varchar2(50) not null,
+	Jmeno varchar2(50) not null,
  	IdZanru numeric(2,0) not null,
  	IdNakl numeric(4,0) not null,
  	Pocet numeric(3,0) default 0 not null,
@@ -69,9 +69,9 @@ create index Kniha_Nakladatelstvi_INX on Kniha(IdNakl);
 --Tabulka autor obsahuje vsechny autory
 create table Autor(
 	IdAutor numeric(6,0),
-	JmenoAut varchar2(50) not null,
- 	PrijmeniAut varchar2(50) not null,
- 	DatumNarozeniAut date not null,
+	Jmeno varchar2(50) not null,
+ 	Prijmeni varchar2(50) not null,
+ 	DatumNarozeni date not null,
  	--
  	constraint Autor_PK primary key (IdAutor)
  );
@@ -88,7 +88,9 @@ create table Napsal(
  );
 
 --indexy pres cizi klice (zanr a nakladatelstvi)
-create index Napsal_Autor_INX on Napsal(IdAutor);
+
+--zastupitelny indexem pres primarni klic
+--create index Napsal_Autor_INX on Napsal(IdAutor); 
 create index Napsal_Kniha_INX on Napsal(IdKnihy);
 
 
@@ -141,7 +143,9 @@ create table Hodnoceni(
  );
 
 --indexy pres cizi klice (IdCtenare a IdKnihy)
-create index Hodnoceni_Ctenar_INX on Hodnoceni(IdCten);
+
+--zastupitelny indexem pres primarni klic
+--create index Hodnoceni_Ctenar_INX on Hodnoceni(IdCten);
 create index Hodnoceni_Kniha_INX on Hodnoceni(IdKnihy);
 
 ----------------------------------
@@ -159,7 +163,9 @@ before insert -- spustit jeste pred vlastnim insertem ...
 on Kniha  -- ... do tabulky Kniha ...
 for each row  -- ... pro kazdou radku znovu ...
 begin
-  select SEQ_Kniha_id.nextval into :NEW.IdKnihy from dual;
+  if (:NEW.IdKnihy is null) then  
+    select SEQ_Kniha_id.nextval into :NEW.IdKnihy from dual;
+  end if;
 end bef_ins_kniha_id;
 /
 
@@ -174,7 +180,9 @@ before insert
 on Ctenar 
 for each row 
 begin
-  select SEQ_Ctenar_id.nextval into :NEW.IdCten from dual;
+  if (:NEW.IdCten is null) then
+    select SEQ_Ctenar_id.nextval into :NEW.IdCten from dual;
+  end if;
 end bef_ins_Ctenar_id;
 /
 
@@ -189,7 +197,9 @@ before insert
 on Autor 
 for each row 
 begin
-  select SEQ_Autor_id.nextval into :NEW.IdAutor from dual;
+  if (:NEW.IdAutor is null) then
+    select SEQ_Autor_id.nextval into :NEW.IdAutor from dual;
+  end if;
 end bef_ins_Autor_id;
 /
 
@@ -204,7 +214,9 @@ before insert
 on Nakladatelstvi 
 for each row 
 begin
-  select SEQ_Nakladatelstvi_id.nextval into :NEW.IdNakl from dual;
+  if (:NEW.IdNakl is null) then
+    select SEQ_Nakladatelstvi_id.nextval into :NEW.IdNakl from dual;
+  end if;
 end bef_ins_Nakladatelstvi_id;
 /
 
@@ -219,7 +231,9 @@ before insert
 on Zanr
 for each row 
 begin
-  select SEQ_Zanr_id.nextval into :NEW.IdZanru from dual;
+  if (:NEW.IdZanru is null) then
+    select SEQ_Zanr_id.nextval into :NEW.IdZanru from dual;
+  end if;
 end bef_ins_Zanr_id;
 /
 
@@ -234,7 +248,9 @@ before insert
 on Vypujcky
 for each row 
 begin
-  select SEQ_Vypujcky_id.nextval into :NEW.IdVypujc from dual;
+  if (:NEW.IdVypujc is null) then
+    select SEQ_Vypujcky_id.nextval into :NEW.IdVypujc from dual;
+  end if;
 end bef_ins_Vypujcky_id;
 /
 
@@ -249,7 +265,9 @@ before insert
 on Archiv
 for each row 
 begin
-  select SEQ_Archiv_id.nextval into :NEW.IdUdalosti from dual;
+  if (:NEW.IdUdalosti is null) then
+    select SEQ_Archiv_id.nextval into :NEW.IdUdalosti from dual;
+  end if;
 end bef_ins_Archiv_id;
 /
 
@@ -369,7 +387,7 @@ begin
       RAISE_APPLICATION_ERROR(-20044, 'Kniha nemuze byt smazana, pokud ji ma nekdo vypujcenou.');
     else --updating
       if not((:old.IdKnihy = :new.IdKnihy) AND (:old.ISBN = :new.ISBN) AND
-        (:old.JmenoKnihy = :new.JmenoKnihy) AND (:old.IdZanru = :new.IdZanru) AND
+        (:old.Jmeno = :new.Jmeno) AND (:old.IdZanru = :new.IdZanru) AND
         (:old.IdNakl = :new.IdNakl) AND (:old.Pocet < :new.Pocet)) --tj. zvysuje se pouze mnozstvi
         then
          RAISE_APPLICATION_ERROR(-20045, 'Danou knihu ma nekdo vypujcenou, jedine, co lze delat, je zvysovani poctu kusu.');
@@ -379,60 +397,58 @@ begin
 end bef_del_upd_Kniha;
 /
 
---pokud ma ctenar pujcenou nejakou knihu, pak nejde smazat
-create trigger bef_del_Ctenar
-before delete
-on Ctenar
-for each row 
-declare
-   pocet_pujcenych number; --pocet aktualne pujcenych knih daneho ctenare
-begin
-  select count(*) into pocet_pujcenych from Vypujcky v where (v.idCten = :old.IdCten);
+-- zruseno kvuli paralelnimu behu (osetreno v procedure na smazani uzivatele)
+-- pokud ma ctenar pujcenou nejakou knihu, pak nejde smazat
+-- create trigger bef_del_Ctenar
+-- before delete
+-- on Ctenar
+-- for each row 
+-- declare
+--   pocet_pujcenych number; --pocet aktualne pujcenych knih daneho ctenare
+-- begin
+--  select count(*) into pocet_pujcenych from Vypujcky v where (v.idCten = :old.IdCten);
 
-  if (pocet_pujcenych > 0) then
-    RAISE_APPLICATION_ERROR(-20054, 'Ctenar nemuze byt smazan, pokud ma pujcenou nejakou knihu.');    
-  end if;
-end bef_del_Ctenar;
-/
+--   if (pocet_pujcenych > 0) then
+--     RAISE_APPLICATION_ERROR(-20054, 'Ctenar nemuze byt smazan, pokud ma pujcenou nejakou knihu.');    
+--   end if;
+-- end bef_del_Ctenar;
+-- /
+
+-- zruseno kvuli paralelnimu behu (osetreno v procedure na smazani uzivatele)
+--pokud je zanr uveden u nektere knihy, pak nejde smazat
+-- create trigger bef_del_Zanr
+-- before delete
+-- on Zanr
+-- for each row 
+-- declare
+--    pocet_knih number; --pocet knih s danym zanrem
+-- begin
+--   select count(*) into pocet_knih from Kniha k where (k.IdZanru = :old.IdZanru);
+
+--   if (pocet_knih > 0) then
+--     RAISE_APPLICATION_ERROR(-20054, 'Zanr je uveden u nektere knihy. Nemuze byt tudiz smazan.');    
+--   end if;
+-- end bef_del_Zanr;
+-- /
 
 --pokud je zanr uveden u nektere knihy, pak nejde smazat
-create trigger bef_del_Zanr
-before delete
-on Zanr
-for each row 
-declare
-   pocet_knih number; --pocet knih s danym zanrem
-begin
-  select count(*) into pocet_knih from Kniha k where (k.IdZanru = :old.IdZanru);
+-- create trigger bef_del_Nakladatelstvi
+-- before delete
+-- on Nakladatelstvi
+-- for each row 
+-- declare
+--    pocet_knih number; --pocet knih s danym nakladatelstvim
+-- begin
+--   select count(*) into pocet_knih from Kniha k where (k.IdNakl = :old.IdNakl);
 
-  if (pocet_knih > 0) then
-    RAISE_APPLICATION_ERROR(-20054, 'Zanr je uveden u nektere knihy. Nemuze byt tudiz smazan.');    
-  end if;
-end bef_del_Zanr;
-/
-
---pokud je zanr uveden u nektere knihy, pak nejde smazat
-create trigger bef_del_Nakladatelstvi
-before delete
-on Nakladatelstvi
-for each row 
-declare
-   pocet_knih number; --pocet knih s danym nakladatelstvim
-begin
-  select count(*) into pocet_knih from Kniha k where (k.IdNakl = :old.IdNakl);
-
-  if (pocet_knih > 0) then
-    RAISE_APPLICATION_ERROR(-20054, 'Nakladatelstvi je uvedeno u nektere knihy. Nemuze byt tudiz smazano.');    
-  end if;
-end bef_del_Nakladatelstvi;
-/
+--   if (pocet_knih > 0) then
+--     RAISE_APPLICATION_ERROR(-20054, 'Nakladatelstvi je uvedeno u nektere knihy. Nemuze byt tudiz smazano.');    
+--   end if;
+-- end bef_del_Nakladatelstvi;
+-- /
 
 --vyzkouseni:
 --delete from vypujcky
-
----------------------------------------
---Vlozeni demonstracnich dat-----------
----------------------------------------
 
 ---------------------------------------
 --Vlozeni demonstracnich dat-----------
@@ -446,26 +462,26 @@ insert into Nakladatelstvi (NazevNakl) values ('Euromedia Group - Knižní klub'
 insert into Nakladatelstvi (NazevNakl) values ('Albatros');
 insert into Nakladatelstvi (NazevNakl) values ('Kniha Zlín');
 
-insert into Kniha (ISBN, JmenoKnihy, IdZanru, IdNakl, Pocet) 
+insert into Kniha (ISBN, Jmeno, IdZanru, IdNakl, Pocet) 
   values ('978-80-242-4682-6', 'Nástroje smrti 6: Město nebeského ohně', 2, 1, 2);
 
-insert into Kniha (ISBN, JmenoKnihy, IdZanru, IdNakl, Pocet) 
+insert into Kniha (ISBN, Jmeno, IdZanru, IdNakl, Pocet) 
   values ('978-80-00-02756-2', 'Harry Potter a kámen mudrců', 2, 2, 1);
 
-insert into Kniha (ISBN, JmenoKnihy, IdZanru, IdNakl, Pocet) 
+insert into Kniha (ISBN, Jmeno, IdZanru, IdNakl, Pocet) 
   values ('80-00-01197-2', 'Harry Potter a Tajemná komnata', 2, 2, 1);
 
-insert into Kniha (ISBN, JmenoKnihy, IdZanru, IdNakl, Pocet) 
+insert into Kniha (ISBN, Jmeno, IdZanru, IdNakl, Pocet) 
   values ('978-80-87497-45-6', 'Sněhulák', 3, 3, 2);
 
-insert into Kniha (ISBN, JmenoKnihy, IdZanru, IdNakl, Pocet) 
+insert into Kniha (ISBN, Jmeno, IdZanru, IdNakl, Pocet) 
   values ('978-80-87497-01-2', 'Nemesis', 3, 3, 1);
 
-insert into autor (JmenoAut, PrijmeniAut, DatumNarozeniAut) 
+insert into autor (Jmeno, Prijmeni, DatumNarozeni) 
   values ('Cassandra', 'Clareová', '27-JUL-1973');
-insert into autor (JmenoAut, PrijmeniAut, DatumNarozeniAut) 
+insert into autor (Jmeno, Prijmeni, DatumNarozeni) 
   values ('Joanne', 'Rowlingová', '31-JUL-1965');
-insert into autor (JmenoAut, PrijmeniAut, DatumNarozeniAut) 
+insert into autor (Jmeno, Prijmeni, DatumNarozeni) 
   values ('Jo', 'Nesbø', '29-MAR-1960');
 
 insert into napsal (IdAutor, IdKnihy) values (1, 1);
@@ -474,16 +490,16 @@ insert into napsal (IdAutor, IdKnihy) values (2, 3);
 insert into napsal (IdAutor, IdKnihy) values (3, 4);
 insert into napsal (IdAutor, IdKnihy) values (3, 5);
 
-insert into Ctenar (JmenoCten, PrijmeniCten, DatumNarozeniCten, Mesto, CisloPopisne, Email)
+insert into Ctenar (Jmeno, Prijmeni, DatumNarozeni, Mesto, CisloPopisne, Email)
   values ('Jakub', 'Naplava', '03-Mar-1993', 'Osvetimany', 378, 'arahusky@seznam.cz');
 
-insert into Ctenar (JmenoCten, PrijmeniCten, DatumNarozeniCten, Mesto, CisloPopisne, Email)
+insert into Ctenar (Jmeno, Prijmeni, DatumNarozeni, Mesto, CisloPopisne, Email)
   values ('Josef', 'Valtr', '01-JUN-2000', 'Praha', 123, 'pepa.valtr@google.com');
 
-insert into Ctenar (JmenoCten, PrijmeniCten, DatumNarozeniCten, Mesto, CisloPopisne, Email)
+insert into Ctenar (Jmeno, Prijmeni, DatumNarozeni, Mesto, CisloPopisne, Email)
   values ('Jana', 'Novotna', '24-DEC-1967', 'Uherské Hradiště', 4352, 'jana.novotna@google.com');
 
-insert into Ctenar (JmenoCten, PrijmeniCten, DatumNarozeniCten, Mesto, CisloPopisne, Email)
+insert into Ctenar (Jmeno, Prijmeni, DatumNarozeni, Mesto, CisloPopisne, Email)
   values ('Ema', 'Destinova', '19-NOV-1933', 'New York', 1, 'ema.dest@email.cz');
 
 insert into Vypujcky (IdCten, IdKnihy) 
@@ -510,7 +526,7 @@ Create package db_kniha as
   --pridani nove knihy
   PROCEDURE pridej(
     xisbn      kniha.ISBN%type,
-    xjmenoKnihy   kniha.JmenoKnihy%type,
+    xJmeno   kniha.Jmeno%type,
     xidZanru  kniha.IdZanru%type,
     xIdNakl  kniha.IdNakl%type,
     xPocet kniha.Pocet%type
@@ -523,7 +539,7 @@ Create package db_kniha as
   procedure edit(
     xid   kniha.idKnihy%type,
     xisbn      kniha.ISBN%type default null,
-    xjmenoKnihy   kniha.JmenoKnihy%type default null,
+    xJmeno   kniha.Jmeno%type default null,
     xidZanru  kniha.IdZanru%type default null,
     xIdNakl  kniha.IdNakl%type default null,
     xPocet kniha.Pocet%type default null
@@ -543,6 +559,7 @@ CREATE PACKAGE BODY db_kniha AS
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_neexistujici_zanr_nkl EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
+
  --EXC_datum_spatny_format EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
@@ -551,17 +568,17 @@ CREATE PACKAGE BODY db_kniha AS
 
  PROCEDURE pridej(
     xisbn      kniha.ISBN%type,
-    xjmenoKnihy   kniha.JmenoKnihy%type,
+    xJmeno   kniha.Jmeno%type,
     xidZanru  kniha.IdZanru%type,
     xIdNakl  kniha.IdNakl%type,
     xPocet kniha.Pocet%type
   )
   AS
   begin
-      insert into kniha (ISBN, JmenoKnihy, IdZanru, IdNakl, Pocet)
-        values (xisbn, xjmenoKnihy, xidZanru, xIdNakl, xPocet);
+      insert into kniha (ISBN, Jmeno, IdZanru, IdNakl, Pocet)
+        values (xisbn, xJmeno, xidZanru, xIdNakl, xPocet);
 
-      DBMS_OUTPUT.PUT_LINE ('Nova kniha ' || xjmenoKnihy || ' byla uspesne pridana. Doporucujeme, co nejdrive pridat autory.');
+      DBMS_OUTPUT.PUT_LINE ('Nova kniha ' || xJmeno || ' byla uspesne pridana. Doporucujeme, co nejdrive pridat autory.');
       
    EXCEPTION
     when EXC_prilis_dlouha_hodnota then
@@ -583,7 +600,7 @@ CREATE PACKAGE BODY db_kniha AS
  procedure edit(
     xid   kniha.idKnihy%type,
     xisbn      kniha.ISBN%type default null,
-    xjmenoKnihy   kniha.JmenoKnihy%type default null,
+    xJmeno   kniha.Jmeno%type default null,
     xidZanru  kniha.IdZanru%type default null,
     xIdNakl  kniha.IdNakl%type default null,
     xPocet kniha.Pocet%type default null
@@ -591,7 +608,7 @@ CREATE PACKAGE BODY db_kniha AS
  begin  
    update Kniha set
       isbn = decode(xisbn, null, isbn, xisbn),
-      JmenoKnihy = decode(xjmenoKnihy, null, JmenoKnihy, xjmenoKnihy),
+      Jmeno = decode(xJmeno, null, Jmeno, xJmeno),
       IdZanru = decode(xidZanru, null, IdZanru, xidZanru),
       IdNakl = decode(xIdNakl, null, IdNakl, xIdNakl),
       Pocet = decode(xPocet, null, Pocet, xPocet)
@@ -639,9 +656,9 @@ CREATE PACKAGE BODY db_kniha AS
 Create package db_ctenar as
   --pridani noveho ctenare
   PROCEDURE pridej(
-    xjmeno      ctenar.JmenoCten%type,
-    xprijmeni   ctenar.PrijmeniCten%type,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type,
+    xjmeno      ctenar.Jmeno%type,
+    xprijmeni   ctenar.Prijmeni%type,
+    xdatumNarozeni  ctenar.DatumNarozeni%type,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type
@@ -653,9 +670,9 @@ Create package db_ctenar as
   --editace ctenare
   procedure edit(
     xid   ctenar.idCten%type,
-    xjmeno      ctenar.JmenoCten%type default null,
-    xprijmeni   ctenar.PrijmeniCten%type default null,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type default null,
+    xjmeno      ctenar.Jmeno%type default null,
+    xprijmeni   ctenar.Prijmeni%type default null,
+    xdatumNarozeni  ctenar.DatumNarozeni%type default null,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type default null
@@ -698,23 +715,25 @@ CREATE PACKAGE BODY db_ctenar AS
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
  EXC_neexistujici_cte_kniha EXCEPTION;
+ EXC_kniha_pujcena EXCEPTION;
  --EXC_datum_spatny_format EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
  PRAGMA EXCEPTION_INIT (EXC_neexistujici_cte_kniha, -02291);
+ PRAGMA EXCEPTION_INIT (EXC_kniha_pujcena, -02292);
 
  PROCEDURE pridej(
-    xjmeno      ctenar.JmenoCten%type,
-    xprijmeni   ctenar.PrijmeniCten%type,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type,
+    xjmeno      ctenar.Jmeno%type,
+    xprijmeni   ctenar.Prijmeni%type,
+    xdatumNarozeni  ctenar.DatumNarozeni%type,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type
   )
   AS
   begin
-      insert into ctenar (JmenoCten, PrijmeniCten, DatumNarozeniCten, Mesto, CisloPopisne, Email)
+      insert into ctenar (Jmeno, Prijmeni, DatumNarozeni, Mesto, CisloPopisne, Email)
         values (xjmeno, xprijmeni, xdatumNarozeni, xmesto, xcisloPopisne, lower(xemail));
 
       DBMS_OUTPUT.PUT_LINE ('Novy ctenar ' || xjmeno || ' ' || xprijmeni || ' byl uspesne pridan.');
@@ -731,23 +750,25 @@ CREATE PACKAGE BODY db_ctenar AS
  as
  begin
   delete from ctenar where idCten = xid;
-    --trigger se postara o to, abychom nemazali uzivatele, ktery ma neco pujceneho
+  EXCEPTION
+    when EXC_kniha_pujcena then
+      RAISE_APPLICATION_ERROR (-20071,'Ctenar ma pujcenou nejakou knihu. Nelze tudiz smazat.');
  end;
 
  procedure edit(
     xid   ctenar.idCten%type,
-    xjmeno      ctenar.JmenoCten%type default null,
-    xprijmeni   ctenar.PrijmeniCten%type default null,
-    xdatumNarozeni  ctenar.DatumNarozeniCten%type default null,
+    xjmeno      ctenar.Jmeno%type default null,
+    xprijmeni   ctenar.Prijmeni%type default null,
+    xdatumNarozeni  ctenar.DatumNarozeni%type default null,
     xmesto  ctenar.Mesto%type default null,
     xcisloPopisne ctenar.CisloPopisne%type default null,
     xemail  ctenar.email%type default null
   ) as 
  begin  
    update Ctenar set
-      JmenoCten = decode(xjmeno, null, JmenoCten, xjmeno),
-      PrijmeniCten = decode(xprijmeni, null, PrijmeniCten, xprijmeni),
-      DatumNarozeniCten = decode(xdatumNarozeni, null, DatumNarozeniCten, xdatumNarozeni),
+      Jmeno = decode(xjmeno, null, Jmeno, xjmeno),
+      Prijmeni = decode(xprijmeni, null, Prijmeni, xprijmeni),
+      DatumNarozeni = decode(xdatumNarozeni, null, DatumNarozeni, xdatumNarozeni),
       Mesto = decode(xmesto, null, Mesto, 'null', null, xmesto),
       CisloPopisne = decode(xcisloPopisne, null, CisloPopisne, 'null', null, xcisloPopisne),
       Email = decode(xemail, null, email, lower(xemail))
@@ -863,9 +884,11 @@ CREATE PACKAGE BODY db_zanr AS
  --provazani s vyjimkami, ktere vyhazuje db
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
+ EXC_zanr_prirazen EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
+ PRAGMA EXCEPTION_INIT (EXC_zanr_prirazen, -02292);
 
  PROCEDURE pridej(
     xnazevZanru zanr.NazevZanru%type
@@ -889,7 +912,9 @@ CREATE PACKAGE BODY db_zanr AS
  as
  begin
   delete from zanr where IdZanru = xid;
-    --trigger se postara o to, abychom nesmazali zanr, pokud je uveden u nektere knihy
+  EXCEPTION
+    when EXC_zanr_prirazen then
+      RAISE_APPLICATION_ERROR (-20071,'Zanr je prirazen nektere knize, nelze tudiz smazat.');
  end;
 
  procedure edit(
@@ -948,9 +973,11 @@ CREATE PACKAGE BODY db_nakladatelstvi AS
  --provazani s vyjimkami, ktere vyhazuje db
  EXC_prilis_dlouha_hodnota EXCEPTION;
  EXC_porusena_unikatnost EXCEPTION;
+ EXC_nakl_prirazeno EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
+ PRAGMA EXCEPTION_INIT (EXC_nakl_prirazeno, -02292);
 
  PROCEDURE pridej(
     xnazevNakl nakladatelstvi.NazevNakl%type
@@ -974,7 +1001,9 @@ CREATE PACKAGE BODY db_nakladatelstvi AS
  as
  begin
   delete from nakladatelstvi where IdNakl = xid;
-    --trigger se postara o to, abychom nesmazali nakladatelstvi, pokud je uvedeno u nektere knihy
+  EXCEPTION
+    when EXC_nakl_prirazeno then
+      RAISE_APPLICATION_ERROR (-20071,'Nakladatelstvi je prirazeno nektere knize, nelze tudiz smazat.');
  end; --odeber
 
  procedure edit(
@@ -1011,9 +1040,9 @@ CREATE PACKAGE BODY db_nakladatelstvi AS
 Create package db_autor as
   --pridani noveho autora
   PROCEDURE pridej(
-    xjmenoAut      autor.JmenoAut%type,
-    xprijmeniAut   autor.PrijmeniAut%type,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type
+    xJmeno      autor.Jmeno%type,
+    xPrijmeni   autor.Prijmeni%type,
+    xDatumNarozeni  autor.DatumNarozeni%type
   );
 
   --odebrani autora dle ID
@@ -1022,9 +1051,9 @@ Create package db_autor as
   --editace autora
   procedure edit(
     xid   autor.IdAutor%type,
-    xjmenoAut      autor.JmenoAut%type default null,
-    xprijmeniAut   autor.PrijmeniAut%type default null,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type default null
+    xJmeno      autor.Jmeno%type default null,
+    xPrijmeni   autor.Prijmeni%type default null,
+    xDatumNarozeni  autor.DatumNarozeni%type default null
   );
 
   --s danym autorem asociuje autorstvi dane knihy
@@ -1054,16 +1083,16 @@ CREATE PACKAGE BODY db_autor AS
  PRAGMA EXCEPTION_INIT (EXC_neexistujici_aut_kniha, -02291);
 
  PROCEDURE pridej(
-    xjmenoAut      autor.JmenoAut%type,
-    xprijmeniAut   autor.PrijmeniAut%type,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type
+    xJmeno      autor.Jmeno%type,
+    xPrijmeni   autor.Prijmeni%type,
+    xDatumNarozeni  autor.DatumNarozeni%type
   )
   AS
   begin
-      insert into autor (JmenoAut, PrijmeniAut, DatumNarozeniAut)
-        values (xjmenoAut, xprijmeniAut, xdatumNarozeniAut);
+      insert into autor (Jmeno, Prijmeni, DatumNarozeni)
+        values (xJmeno, xPrijmeni, xDatumNarozeni);
 
-      DBMS_OUTPUT.PUT_LINE ('Novy autor ' || xjmenoAut || ' ' || xprijmeniAut || ' byl uspesne pridan.');
+      DBMS_OUTPUT.PUT_LINE ('Novy autor ' || xJmeno || ' ' || xPrijmeni || ' byl uspesne pridan.');
       
   EXCEPTION
     when EXC_prilis_dlouha_hodnota then
@@ -1080,15 +1109,15 @@ CREATE PACKAGE BODY db_autor AS
 
  procedure edit(
     xid   autor.IdAutor%type,
-    xjmenoAut      autor.JmenoAut%type default null,
-    xprijmeniAut   autor.PrijmeniAut%type default null,
-    xdatumNarozeniAut  autor.DatumNarozeniAut%type default null
+    xJmeno      autor.Jmeno%type default null,
+    xPrijmeni   autor.Prijmeni%type default null,
+    xDatumNarozeni  autor.DatumNarozeni%type default null
   ) as 
  begin  
    update Autor set
-      JmenoAut = decode(xjmenoAut, null, JmenoAut, xjmenoAut),
-      PrijmeniAut = decode(xprijmeniAut, null, PrijmeniAut, xprijmeniAut),
-      DatumNarozeniAut = decode(xdatumNarozeniAut, null, DatumNarozeniAut, xdatumNarozeniAut)
+      Jmeno = decode(xJmeno, null, Jmeno, xJmeno),
+      Prijmeni = decode(xPrijmeni, null, Prijmeni, xPrijmeni),
+      DatumNarozeni = decode(xDatumNarozeni, null, DatumNarozeni, xDatumNarozeni)
     where IdAutor=xid;
 
     EXCEPTION
@@ -1121,7 +1150,6 @@ CREATE PACKAGE BODY db_autor AS
  END; --db_ctenar
 /
 
---TODO!!! udelat si funkci pro spravne handlovani korektnosti datumu
 
 ----------------------
 --Views---------------
@@ -1129,14 +1157,14 @@ CREATE PACKAGE BODY db_autor AS
 
 --seznam ctenaru
 create view VW_seznam_ctenaru as
-  select (JmenoCten || ' ' || PrijmeniCten) as jmeno, DatumNarozeniCten as datum_narozeni, 
+  select (Jmeno || ' ' || Prijmeni) as jmeno, DatumNarozeni as datum_narozeni, 
   (Mesto || ' ' || CisloPopisne) as bydliste, email, idCten as id
     from Ctenar
 ;
 
 --seznam knih
 create view VW_seznam_knih as
-  select JmenoKnihy as jmeno_knihy, ISBN, NazevNakl as jmeno_nakladatelstvi, NazevZanru as nazev_zanru,
+  select Jmeno as jmeno_knihy, ISBN, NazevNakl as jmeno_nakladatelstvi, NazevZanru as nazev_zanru,
     pocet as pocet_kusu, idKnihy as id
     from Kniha 
     natural join Zanr
@@ -1145,7 +1173,7 @@ create view VW_seznam_knih as
 
 --seznam knih s poctem udavajicim, kolik jich je dostupnych k pujceni
 create view VW_pocet_dost_knih as
-  select k.IdKnihy, k.ISBN, k.JmenoKnihy, k.idZanru, k.idNakl, 
+  select k.IdKnihy, k.ISBN, k.Jmeno, k.idZanru, k.idNakl, 
         (k.pocet - db_kniha.pocet_pujcenych(k.IdKnihy)) as pocet_dostupnych from Kniha k
 ;
 
@@ -1156,14 +1184,14 @@ create view VW_volne_knihy as
 
 --seznam aktualne vypujcenych knihy
 create view VW_pujcene_knihy as
-  select IdKnihy as id_knihy, JmenoKnihy as jmeno_knihy, IdCten as id_ctenare, KdyPujc as datum_vypujcky from vypujcky 
+  select IdKnihy as id_knihy, Jmeno as jmeno_knihy, IdCten as id_ctenare, KdyPujc as datum_vypujcky from vypujcky 
     natural join kniha
 ;
 
 --seznam lidi a prislusnych knih, ktere jsou pujcene dele nez 100 dni
 create view VW_seznam_hrisniku_a_knih as
-  select idCten AS IdCtenare, (JmenoCten || ' ' || PrijmeniCten) as Jmeno_Ctenare, Email, IdKnihy,
-   JmenoKnihy, KdyPujc as Datum_Vypujcky, floor(current_date - KdyPujc) as Pocet_Dni_Od_Pujceni
+  select idCten AS IdCtenare, (Jmeno || ' ' || Prijmeni) as Jmeno_Ctenare, Email, IdKnihy,
+   Jmeno, KdyPujc as Datum_Vypujcky, floor(current_date - KdyPujc) as Pocet_Dni_Od_Pujceni
     from vypujcky
     natural join ctenar
     natural join kniha
@@ -1177,22 +1205,22 @@ create view VW_seznam_hrisniku as
 
 --seznam autoru
 create view VW_seznam_autoru as
- select (JmenoAut || ' ' || PrijmeniAut) as jmeno, DatumNarozeniAut as datum_narozeni, IdAutor as id
+ select (Jmeno || ' ' || Prijmeni) as jmeno, DatumNarozeni as datum_narozeni, IdAutor as id
    from autor
 ;
 
 --seznam autoru s knihami, ktere napsali
 create view VW_seznam_autor_kniha as
- select jmeno as jmeno_autora, id as id_autora, k.JmenoKnihy as jmeno_knihy, k.idKnihy as id_knihy  
-  from VW_seznam_autoru
-  inner join napsal n on (n.IdAutor = id)
+ select V.jmeno as jmeno_autora, V.id as id_autora, k.Jmeno as jmeno_knihy, k.idKnihy as id_knihy  
+  from VW_seznam_autoru V
+  inner join napsal n on (n.IdAutor = V.id)
   inner join kniha k on (k.idKnihy = n.idKnihy)
 ;
 
 --view pro archiv
 create view VW_archiv as
-  select DatumUdalosti as kdy, (JmenoCten || ' ' || PrijmeniCten) as jmeno_ctenare, 
-  idCten as id_ctenare, JmenoKnihy as jmeno_knihy, idKnihy as id_knihy, status as akce, poznamka
+  select DatumUdalosti as kdy, (Jmeno || ' ' || Prijmeni) as jmeno_ctenare, 
+  idCten as id_ctenare, Jmeno as jmeno_knihy, idKnihy as id_knihy, status as akce, poznamka
     from Archiv 
     natural join Ctenar
     natural join Kniha
@@ -1201,20 +1229,20 @@ create view VW_archiv as
 --seznam setrizeny dle poctu pujcovani - resp. vraceni
 --tedy od ctenare, ktery si toho pujcoval nejvic, po toho, ktery nejmene (ale aspon jednu)
 create view VW_kdo_kolik_pujcoval as
-  select count(idCten) as pocet_vraceni, (JmenoCten || ' ' || PrijmeniCten) as jmeno_ctenare
+  select count(idCten) as pocet_vraceni, (Jmeno || ' ' || Prijmeni) as jmeno_ctenare
     from Ctenar 
     natural join Archiv
     where status = 'V' --pocitame jenom ty, ktere ctenari uz vratili
-    group by idCten, JmenoCten, PrijmeniCten --nejdrive dle id (unique), dalsi jen pro radost DB
+    group by idCten, Jmeno, Prijmeni --nejdrive dle id (unique), dalsi jen pro radost DB
     order by pocet_vraceni desc 
 ;
 
 --seznam knih s jejich prumernou znamkou
 create view VW_knihy_hodnoceni as
-  select avg(znamka) as prumerna_znamka, JmenoKnihy as jmeno_knihy, isbn
+  select avg(znamka) as prumerna_znamka, Jmeno as jmeno_knihy, isbn
     from Kniha 
     natural join Hodnoceni
-    group by idKnihy, JmenoKnihy, ISBN --nejdrive dle id (unique), dalsi jen pro radost DB
+    group by idKnihy, Jmeno, ISBN --nejdrive dle id (unique), dalsi jen pro radost DB
 ;
 
 --top 3 nejlepe hodnocene knihy
@@ -1463,31 +1491,31 @@ drop sequence SEQ_VYPUJCKY_ID;
 drop sequence SEQ_ZANR_ID;
 
 --select 'drop trigger ' || trigger_name || ';' from user_triggers;
-drop trigger BEF_INS_VYPUJCKY_ID;            
-drop trigger BEF_INS_VYPUJCKY;               
-drop trigger AFT_INS_DEL_VYPUJCKY;           
-drop trigger BEF_INS_ARCHIV_ID;              
-drop trigger BEF_INS_AUTOR_ID;               
-drop trigger BEF_INS_HODNOCENI;              
-drop trigger BEF_INS_KNIHA_ID;               
-drop trigger BEF_DEL_UPD_KNIHA;              
-drop trigger BEF_INS_NAKLADATELSTVI_ID;      
-drop trigger BEF_DEL_NAKLADATELSTVI;         
-drop trigger BEF_INS_ZANR_ID;                
-drop trigger BEF_DEL_ZANR;                   
-drop trigger BEF_INS_CTENAR_ID;              
-drop trigger BEF_DEL_CTENAR;                 
+-- drop trigger BEF_INS_VYPUJCKY_ID;            
+-- drop trigger BEF_INS_VYPUJCKY;               
+-- drop trigger AFT_INS_DEL_VYPUJCKY;           
+-- drop trigger BEF_INS_ARCHIV_ID;              
+-- drop trigger BEF_INS_AUTOR_ID;               
+-- drop trigger BEF_INS_HODNOCENI;              
+-- drop trigger BEF_INS_KNIHA_ID;               
+-- drop trigger BEF_DEL_UPD_KNIHA;              
+-- drop trigger BEF_INS_NAKLADATELSTVI_ID;      
+-- drop trigger BEF_DEL_NAKLADATELSTVI;         
+-- drop trigger BEF_INS_ZANR_ID;                
+-- drop trigger BEF_DEL_ZANR;                   
+-- drop trigger BEF_INS_CTENAR_ID;              
+-- drop trigger BEF_DEL_CTENAR;                 
              
-drop index KNIHA_ZANR_INX;                 
-drop index KNIHA_NAKLADATELSTVI_INX;                
-drop index NAPSAL_AUTOR_INX;               
-drop index NAPSAL_KNIHA_INX;               
-drop index VYPUCKY_CTENAR_INX;             
-drop index VYPUJCKY_KNIHA_INX;             
-drop index ARCHIV_CTENAR_INX;              
-drop index ARCHIV_KNIHA_INX;               
-drop index HODNOCENI_CTENAR_INX;           
-drop index HODNOCENI_KNIHA_INX;  
+-- drop index KNIHA_ZANR_INX;                 
+-- drop index KNIHA_NAKLADATELSTVI_INX;                
+-- drop index NAPSAL_AUTOR_INX;               
+-- drop index NAPSAL_KNIHA_INX;               
+-- drop index VYPUCKY_CTENAR_INX;             
+-- drop index VYPUJCKY_KNIHA_INX;             
+-- drop index ARCHIV_CTENAR_INX;              
+-- drop index ARCHIV_KNIHA_INX;               
+-- drop index HODNOCENI_CTENAR_INX;           
+-- drop index HODNOCENI_KNIHA_INX;  
 
 --select 'drop table ' || table_name || ';' from user_tables;
 drop table VYPUJCKY;

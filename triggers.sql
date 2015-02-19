@@ -13,7 +13,9 @@ before insert -- spustit jeste pred vlastnim insertem ...
 on Kniha  -- ... do tabulky Kniha ...
 for each row  -- ... pro kazdou radku znovu ...
 begin
-  select SEQ_Kniha_id.nextval into :NEW.IdKnihy from dual;
+  if (:NEW.IdKnihy is null) then  
+    select SEQ_Kniha_id.nextval into :NEW.IdKnihy from dual;
+  end if;
 end bef_ins_kniha_id;
 /
 
@@ -28,7 +30,9 @@ before insert
 on Ctenar 
 for each row 
 begin
-  select SEQ_Ctenar_id.nextval into :NEW.IdCten from dual;
+  if (:NEW.IdCten is null) then
+    select SEQ_Ctenar_id.nextval into :NEW.IdCten from dual;
+  end if;
 end bef_ins_Ctenar_id;
 /
 
@@ -43,7 +47,9 @@ before insert
 on Autor 
 for each row 
 begin
-  select SEQ_Autor_id.nextval into :NEW.IdAutor from dual;
+  if (:NEW.IdAutor is null) then
+    select SEQ_Autor_id.nextval into :NEW.IdAutor from dual;
+  end if;
 end bef_ins_Autor_id;
 /
 
@@ -58,7 +64,9 @@ before insert
 on Nakladatelstvi 
 for each row 
 begin
-  select SEQ_Nakladatelstvi_id.nextval into :NEW.IdNakl from dual;
+  if (:NEW.IdNakl is null) then
+    select SEQ_Nakladatelstvi_id.nextval into :NEW.IdNakl from dual;
+  end if;
 end bef_ins_Nakladatelstvi_id;
 /
 
@@ -73,7 +81,9 @@ before insert
 on Zanr
 for each row 
 begin
-  select SEQ_Zanr_id.nextval into :NEW.IdZanru from dual;
+  if (:NEW.IdZanru is null) then
+    select SEQ_Zanr_id.nextval into :NEW.IdZanru from dual;
+  end if;
 end bef_ins_Zanr_id;
 /
 
@@ -88,7 +98,9 @@ before insert
 on Vypujcky
 for each row 
 begin
-  select SEQ_Vypujcky_id.nextval into :NEW.IdVypujc from dual;
+  if (:NEW.IdVypujc is null) then
+    select SEQ_Vypujcky_id.nextval into :NEW.IdVypujc from dual;
+  end if;
 end bef_ins_Vypujcky_id;
 /
 
@@ -103,7 +115,9 @@ before insert
 on Archiv
 for each row 
 begin
-  select SEQ_Archiv_id.nextval into :NEW.IdUdalosti from dual;
+  if (:NEW.IdUdalosti is null) then
+    select SEQ_Archiv_id.nextval into :NEW.IdUdalosti from dual;
+  end if;
 end bef_ins_Archiv_id;
 /
 
@@ -117,11 +131,11 @@ declare
    pocet_precteni number;
 begin
   select count(*) into pocet_precteni 
-  	from Archiv a 
-  	where ((a.status = 'V') AND (a.IdCten = :NEW.IdCten) AND (a.IdKnihy = :New.IdKnihy));
-  if (pocet_precteni = 0) 	
-  	then
-		RAISE_APPLICATION_ERROR(-20043, 'Nelze hodnotit knihu, pokud jste ji jeste nevratili, nebo ji vubec necetli!');
+    from Archiv a 
+    where ((a.status = 'V') AND (a.IdCten = :NEW.IdCten) AND (a.IdKnihy = :New.IdKnihy));
+  if (pocet_precteni = 0)   
+    then
+    RAISE_APPLICATION_ERROR(-20043, 'Nelze hodnotit knihu, pokud jste ji jeste nevratili, nebo ji vubec necetli!');
   end if;
 end bef_ins_Hodnoceni;
 /
@@ -147,31 +161,31 @@ declare
 begin
   --ii)
   select k.pocet into pocet_kusu 
-  	from Kniha k 
-  	where (k.IdKnihy = :NEW.IdKnihy); --idKnihy primarni klic -> index
+    from Kniha k 
+    where (k.IdKnihy = :NEW.IdKnihy); --idKnihy primarni klic -> index
    
   select count(*) into pocet_pujcenych 
-  	from Vypujcky v 
-  	where (v.idKnihy = :NEW.IdKnihy); --idKnihy cizi klic -> index
+    from Vypujcky v 
+    where (v.idKnihy = :NEW.IdKnihy); --idKnihy cizi klic -> index
    
   if (pocet_kusu <= pocet_pujcenych) then
-  	RAISE_APPLICATION_ERROR(-20042, 'Vsechny exemplare jsou momentalne pujcene, danou knihu tedy nelze zapujcit.');
+    RAISE_APPLICATION_ERROR(-20042, 'Vsechny exemplare jsou momentalne pujcene, danou knihu tedy nelze zapujcit.');
   end if;
 
   select count(*), min(KdyPujc)
     into pocet_mych_pujcenych, nejdrivejsi_vypujcka
-  	from Vypujcky v 
+    from Vypujcky v 
     where (v.IdCten = :NEW.IdCten); --idKnihy cizi klic -> index
   
   if (pocet_mych_pujcenych > 0) then --jestlize nemam nic pujceneho, pak nemuzu mit moc knizek, ani zadnou pujcenou dele nez 100 dni 
     --iii)
     if (pocet_mych_pujcenych > 10) then
-    	RAISE_APPLICATION_ERROR(-20041, 'Nemuzete mit pujcenych vice nez 10 knih, dana kniha tedy nelze pujcit.');
+      RAISE_APPLICATION_ERROR(-20041, 'Nemuzete mit pujcenych vice nez 10 knih, dana kniha tedy nelze pujcit.');
     end if;
 
     --iv)
     if (nejdrivejsi_vypujcka + 100 < current_date) then
-    	RAISE_APPLICATION_ERROR(-20040, 'Mate pujcenou knihu dele nez 100 dni, dokud ji nevratite, nemuze Vam byt pujcena zadna jina kniha.');
+      RAISE_APPLICATION_ERROR(-20040, 'Mate pujcenou knihu dele nez 100 dni, dokud ji nevratite, nemuze Vam byt pujcena zadna jina kniha.');
     end if;
   end if;
 
@@ -223,7 +237,7 @@ begin
       RAISE_APPLICATION_ERROR(-20044, 'Kniha nemuze byt smazana, pokud ji ma nekdo vypujcenou.');
     else --updating
       if not((:old.IdKnihy = :new.IdKnihy) AND (:old.ISBN = :new.ISBN) AND
-        (:old.JmenoKnihy = :new.JmenoKnihy) AND (:old.IdZanru = :new.IdZanru) AND
+        (:old.Jmeno = :new.Jmeno) AND (:old.IdZanru = :new.IdZanru) AND
         (:old.IdNakl = :new.IdNakl) AND (:old.Pocet < :new.Pocet)) --tj. zvysuje se pouze mnozstvi
         then
          RAISE_APPLICATION_ERROR(-20045, 'Danou knihu ma nekdo vypujcenou, jedine, co lze delat, je zvysovani poctu kusu.');
@@ -233,50 +247,55 @@ begin
 end bef_del_upd_Kniha;
 /
 
---pokud ma ctenar pujcenou nejakou knihu, pak nejde smazat
-create trigger bef_del_Ctenar
-before delete
-on Ctenar
-for each row 
-declare
-   pocet_pujcenych number; --pocet aktualne pujcenych knih daneho ctenare
-begin
-  select count(*) into pocet_pujcenych from Vypujcky v where (v.idCten = :old.IdCten);
+-- zruseno kvuli paralelnimu behu (osetreno v procedure na smazani uzivatele)
+-- pokud ma ctenar pujcenou nejakou knihu, pak nejde smazat
+-- create trigger bef_del_Ctenar
+-- before delete
+-- on Ctenar
+-- for each row 
+-- declare
+--   pocet_pujcenych number; --pocet aktualne pujcenych knih daneho ctenare
+-- begin
+--  select count(*) into pocet_pujcenych from Vypujcky v where (v.idCten = :old.IdCten);
 
-  if (pocet_pujcenych > 0) then
-    RAISE_APPLICATION_ERROR(-20054, 'Ctenar nemuze byt smazan, pokud ma pujcenou nejakou knihu.');    
-  end if;
-end bef_del_Ctenar;
-/
+--   if (pocet_pujcenych > 0) then
+--     RAISE_APPLICATION_ERROR(-20054, 'Ctenar nemuze byt smazan, pokud ma pujcenou nejakou knihu.');    
+--   end if;
+-- end bef_del_Ctenar;
+-- /
+
+-- zruseno kvuli paralelnimu behu (osetreno v procedure na smazani uzivatele)
+--pokud je zanr uveden u nektere knihy, pak nejde smazat
+-- create trigger bef_del_Zanr
+-- before delete
+-- on Zanr
+-- for each row 
+-- declare
+--    pocet_knih number; --pocet knih s danym zanrem
+-- begin
+--   select count(*) into pocet_knih from Kniha k where (k.IdZanru = :old.IdZanru);
+
+--   if (pocet_knih > 0) then
+--     RAISE_APPLICATION_ERROR(-20054, 'Zanr je uveden u nektere knihy. Nemuze byt tudiz smazan.');    
+--   end if;
+-- end bef_del_Zanr;
+-- /
 
 --pokud je zanr uveden u nektere knihy, pak nejde smazat
-create trigger bef_del_Zanr
-before delete
-on Zanr
-for each row 
-declare
-   pocet_knih number; --pocet knih s danym zanrem
-begin
-  select count(*) into pocet_knih from Kniha k where (k.IdZanru = :old.IdZanru);
+-- create trigger bef_del_Nakladatelstvi
+-- before delete
+-- on Nakladatelstvi
+-- for each row 
+-- declare
+--    pocet_knih number; --pocet knih s danym nakladatelstvim
+-- begin
+--   select count(*) into pocet_knih from Kniha k where (k.IdNakl = :old.IdNakl);
 
-  if (pocet_knih > 0) then
-    RAISE_APPLICATION_ERROR(-20054, 'Zanr je uveden u nektere knihy. Nemuze byt tudiz smazan.');    
-  end if;
-end bef_del_Zanr;
-/
+--   if (pocet_knih > 0) then
+--     RAISE_APPLICATION_ERROR(-20054, 'Nakladatelstvi je uvedeno u nektere knihy. Nemuze byt tudiz smazano.');    
+--   end if;
+-- end bef_del_Nakladatelstvi;
+-- /
 
---pokud je zanr uveden u nektere knihy, pak nejde smazat
-create trigger bef_del_Nakladatelstvi
-before delete
-on Nakladatelstvi
-for each row 
-declare
-   pocet_knih number; --pocet knih s danym nakladatelstvim
-begin
-  select count(*) into pocet_knih from Kniha k where (k.IdNakl = :old.IdNakl);
-
-  if (pocet_knih > 0) then
-    RAISE_APPLICATION_ERROR(-20054, 'Nakladatelstvi je uvedeno u nektere knihy. Nemuze byt tudiz smazano.');    
-  end if;
-end bef_del_Nakladatelstvi;
-/
+--vyzkouseni:
+--delete from vypujcky

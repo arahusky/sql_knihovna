@@ -1,3 +1,7 @@
+---------------------------------------
+--Statistika--------------------------
+---------------------------------------
+
 analyze TABLE archiv compute statistics;
 analyze TABLE autor compute statistics;
 analyze TABLE ctenar compute statistics;
