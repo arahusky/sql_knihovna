@@ -196,12 +196,14 @@ CREATE PACKAGE BODY db_ctenar AS
  EXC_porusena_unikatnost EXCEPTION;
  EXC_neexistujici_cte_kniha EXCEPTION;
  EXC_kniha_pujcena EXCEPTION;
+ EXC_moc_pujcenych_knih EXCEPTION;
  --EXC_datum_spatny_format EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
  PRAGMA EXCEPTION_INIT (EXC_neexistujici_cte_kniha, -02291);
  PRAGMA EXCEPTION_INIT (EXC_kniha_pujcena, -02292);
+ PRAGMA EXCEPTION_INIT (EXC_moc_pujcenych_knih, -02290);
 
  PROCEDURE pridej(
     xjmeno      ctenar.Jmeno%type,
@@ -283,6 +285,8 @@ CREATE PACKAGE BODY db_ctenar AS
       RAISE_APPLICATION_ERROR(-20088, 'Dany uzivatel uz si danou knihu pujcil. Nelze pujcovat vice exemplaru jednomu ctenari.');
     WHEN EXC_neexistujici_cte_kniha then
      RAISE_APPLICATION_ERROR(-20089, 'Dany uzivatel nebo kniha neexistuje.'); 
+    WHEN EXC_moc_pujcenych_knih then
+     RAISE_APPLICATION_ERROR(-20060, 'Nelze pujcit danout knihu. Dany uzivatel ma aktualne pujcenych 10 knih.'); 
   end; --pujc_knihu
 
   procedure vrat_knihu(

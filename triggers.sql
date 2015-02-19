@@ -147,7 +147,7 @@ end bef_ins_Hodnoceni;
 --nelze si pujcit knizku pokud:
 --i)uz mam pujcenou knihu se stejnym ID (tj. stejnou knihu) - reseno na urovni integritnich omezeni (kandidatni klic)
 --ii)dana kniha neni k dispozici (tj. vsechny exemplare jsou momentalne pujcene)
---iii)mam pocet pujcenych (nevracenych) knizek >10
+--iii)mam pocet pujcenych (nevracenych) knizek >10 --reseno na urovni integritnich omezeni
 --iv)libovolna z mych pujcenych (nevracenych) knizek je pujcena pres 100 dni
 create trigger bef_ins_Vypujcky
 before insert  
@@ -178,10 +178,10 @@ begin
     where (v.IdCten = :NEW.IdCten); --idKnihy cizi klic -> index
   
   if (pocet_mych_pujcenych > 0) then --jestlize nemam nic pujceneho, pak nemuzu mit moc knizek, ani zadnou pujcenou dele nez 100 dni 
-    --iii)
-    if (pocet_mych_pujcenych > 10) then
-      RAISE_APPLICATION_ERROR(-20041, 'Nemuzete mit pujcenych vice nez 10 knih, dana kniha tedy nelze pujcit.');
-    end if;
+    --iii)reseno na urovni integritniho omezeni tabulky
+    --if (pocet_mych_pujcenych > 10) then
+    --  RAISE_APPLICATION_ERROR(-20041, 'Nemuzete mit pujcenych vice nez 10 knih, dana kniha tedy nelze pujcit.');
+    --end if;
 
     --iv)
     if (nejdrivejsi_vypujcka + 100 < current_date) then
@@ -199,7 +199,7 @@ end bef_ins_Vypujcky;
 --insert into Vypujcky (IdVypujc, IdCten, IdKnihy) values (3, 2, 2);
 --error mas ji moc dlouho
 
---logovani pujcovani a vraceni knizek do archivu
+--logovani pujcovani a vraceni knizek do archivu + korigovani poctu pujcenych knizek ctenare v tabulce Ctenar
 create trigger aft_ins_del_Vypujcky
 after insert or delete
 on Vypujcky
@@ -210,6 +210,10 @@ begin
   if (inserting) then
     insert into archiv (IdCten, IdKnihy, Status) 
       values (:new.IdCten, :new.IdKnihy, 'P'); --status P = pujceno
+
+    --zvyseni poctu pujcenych knih v tabulce Ctenar
+    update Ctenar set PocetVypujcek = PocetVypujcek + 1 
+      where (:NEW.idCten = idCten);
   else 
     if (:old.KdyPujc + 100 < current_date) then
       pozn := 'Vraceno az po ' || floor(current_date - :old.KdyPujc) || ' dnech.'; 
@@ -217,6 +221,10 @@ begin
     end if;
     insert into archiv (IdCten, IdKnihy, Status, Poznamka) 
       values (:old.IdCten, :old.IdKnihy, 'V', pozn); --status V = vraceno
+
+    --snizeni poctu pujcenych knih v tabulce Ctenar
+    update Ctenar set PocetVypujcek = PocetVypujcek - 1 
+      where (:OLD.idCten = idCten);
   end if; 
 
 end aft_ins_del_Vypujcky;

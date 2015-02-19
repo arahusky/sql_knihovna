@@ -20,11 +20,14 @@ create table Ctenar(
   Mesto varchar2(50) default null,
   CisloPopisne numeric(5,0) default null,
   Email varchar2(100) not null, 
+  PocetVypujcek numeric(2,0) default 0, --max 10
   --
   constraint Ctenar_PK primary key (IdCten),
   constraint Ctenar_U_mail unique (Email), --kazdy ctenar musi mit unikatni emailovou adresu
   constraint Ctenar_CHK_Email --email musi byt validni
-    check (REGEXP_LIKE(Email, '[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}'))
+    check (REGEXP_LIKE(Email, '[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}')),
+  constraint Ctenar_CHK_PocetVypujcek --pocet vypujcek nesmi presahnout 10
+    check (PocetVypujcek >= 0 and PocetVypujcek < 11)
  );
 
 --Tabulka Zanr obsahujici ruzne druhy zanru (e.g. sci-fi, historicky, ...), do kterych jsou jednotlive knihy zarazeny
@@ -297,7 +300,7 @@ end bef_ins_Hodnoceni;
 --nelze si pujcit knizku pokud:
 --i)uz mam pujcenou knihu se stejnym ID (tj. stejnou knihu) - reseno na urovni integritnich omezeni (kandidatni klic)
 --ii)dana kniha neni k dispozici (tj. vsechny exemplare jsou momentalne pujcene)
---iii)mam pocet pujcenych (nevracenych) knizek >10
+--iii)mam pocet pujcenych (nevracenych) knizek >10 --reseno na urovni integritnich omezeni
 --iv)libovolna z mych pujcenych (nevracenych) knizek je pujcena pres 100 dni
 create trigger bef_ins_Vypujcky
 before insert  
@@ -328,10 +331,10 @@ begin
     where (v.IdCten = :NEW.IdCten); --idKnihy cizi klic -> index
   
   if (pocet_mych_pujcenych > 0) then --jestlize nemam nic pujceneho, pak nemuzu mit moc knizek, ani zadnou pujcenou dele nez 100 dni 
-    --iii)
-    if (pocet_mych_pujcenych > 10) then
-    	RAISE_APPLICATION_ERROR(-20041, 'Nemuzete mit pujcenych vice nez 10 knih, dana kniha tedy nelze pujcit.');
-    end if;
+    --iii)reseno na urovni integritniho omezeni tabulky
+    --if (pocet_mych_pujcenych > 10) then
+    --	RAISE_APPLICATION_ERROR(-20041, 'Nemuzete mit pujcenych vice nez 10 knih, dana kniha tedy nelze pujcit.');
+    --end if;
 
     --iv)
     if (nejdrivejsi_vypujcka + 100 < current_date) then
@@ -349,7 +352,7 @@ end bef_ins_Vypujcky;
 --insert into Vypujcky (IdVypujc, IdCten, IdKnihy) values (3, 2, 2);
 --error mas ji moc dlouho
 
---logovani pujcovani a vraceni knizek do archivu
+--logovani pujcovani a vraceni knizek do archivu + korigovani poctu pujcenych knizek ctenare v tabulce Ctenar
 create trigger aft_ins_del_Vypujcky
 after insert or delete
 on Vypujcky
@@ -360,6 +363,10 @@ begin
   if (inserting) then
     insert into archiv (IdCten, IdKnihy, Status) 
       values (:new.IdCten, :new.IdKnihy, 'P'); --status P = pujceno
+
+    --zvyseni poctu pujcenych knih v tabulce Ctenar
+    update Ctenar set PocetVypujcek = PocetVypujcek + 1 
+      where (:NEW.idCten = idCten);
   else 
     if (:old.KdyPujc + 100 < current_date) then
       pozn := 'Vraceno az po ' || floor(current_date - :old.KdyPujc) || ' dnech.'; 
@@ -367,6 +374,10 @@ begin
     end if;
     insert into archiv (IdCten, IdKnihy, Status, Poznamka) 
       values (:old.IdCten, :old.IdKnihy, 'V', pozn); --status V = vraceno
+
+    --snizeni poctu pujcenych knih v tabulce Ctenar
+    update Ctenar set PocetVypujcek = PocetVypujcek - 1 
+      where (:OLD.idCten = idCten);
   end if; 
 
 end aft_ins_del_Vypujcky;
@@ -716,12 +727,14 @@ CREATE PACKAGE BODY db_ctenar AS
  EXC_porusena_unikatnost EXCEPTION;
  EXC_neexistujici_cte_kniha EXCEPTION;
  EXC_kniha_pujcena EXCEPTION;
+ EXC_moc_pujcenych_knih EXCEPTION;
  --EXC_datum_spatny_format EXCEPTION;
 
  PRAGMA EXCEPTION_INIT (EXC_prilis_dlouha_hodnota, -12899);
  PRAGMA EXCEPTION_INIT (EXC_porusena_unikatnost, -00001);
  PRAGMA EXCEPTION_INIT (EXC_neexistujici_cte_kniha, -02291);
  PRAGMA EXCEPTION_INIT (EXC_kniha_pujcena, -02292);
+ PRAGMA EXCEPTION_INIT (EXC_moc_pujcenych_knih, -02290);
 
  PROCEDURE pridej(
     xjmeno      ctenar.Jmeno%type,
@@ -803,6 +816,8 @@ CREATE PACKAGE BODY db_ctenar AS
       RAISE_APPLICATION_ERROR(-20088, 'Dany uzivatel uz si danou knihu pujcil. Nelze pujcovat vice exemplaru jednomu ctenari.');
     WHEN EXC_neexistujici_cte_kniha then
      RAISE_APPLICATION_ERROR(-20089, 'Dany uzivatel nebo kniha neexistuje.'); 
+    WHEN EXC_moc_pujcenych_knih then
+     RAISE_APPLICATION_ERROR(-20060, 'Nelze pujcit danout knihu. Dany uzivatel ma aktualne pujcenych 10 knih.'); 
   end; --pujc_knihu
 
   procedure vrat_knihu(

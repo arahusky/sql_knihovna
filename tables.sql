@@ -11,11 +11,14 @@ create table Ctenar(
   Mesto varchar2(50) default null,
   CisloPopisne numeric(5,0) default null,
   Email varchar2(100) not null, 
+  PocetVypujcek numeric(2,0) default 0, --max 10
   --
   constraint Ctenar_PK primary key (IdCten),
   constraint Ctenar_U_mail unique (Email), --kazdy ctenar musi mit unikatni emailovou adresu
   constraint Ctenar_CHK_Email --email musi byt validni
-    check (REGEXP_LIKE(Email, '[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}'))
+    check (REGEXP_LIKE(Email, '[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}')),
+  constraint Ctenar_CHK_PocetVypujcek --pocet vypujcek nesmi presahnout 10
+    check (PocetVypujcek >= 0 and PocetVypujcek < 11)
  );
 
 --Tabulka Zanr obsahujici ruzne druhy zanru (e.g. sci-fi, historicky, ...), do kterych jsou jednotlive knihy zarazeny
