@@ -36,13 +36,13 @@ create view VW_pujcene_knihy as
 ;
 
 --seznam lidi a prislusnych knih, ktere jsou pujcene dele nez 100 dni
-create view VW_seznam_hrisniku_a_knih as
-  select idCten AS IdCtenare, (Jmeno || ' ' || Prijmeni) as Jmeno_Ctenare, Email, IdKnihy,
-   Jmeno, KdyPujc as Datum_Vypujcky, floor(current_date - KdyPujc) as Pocet_Dni_Od_Pujceni
-    from vypujcky
-    natural join ctenar
-    natural join kniha
-    where (KdyPujc + 100 < current_date)
+create or replace view VW_seznam_hrisniku_a_knih as
+  select V.idCten AS IdCtenare, (C.Jmeno || ' ' || C.Prijmeni) as Jmeno_Ctenare, C.Email, V.IdKnihy,
+   K.Jmeno, V.KdyPujc as Datum_Vypujcky, floor(current_date - V.KdyPujc) as Pocet_Dni_Od_Pujceni
+    from vypujcky V
+    inner join ctenar C on (C.IdCten = V.IdCten)
+    inner join kniha K on (K.IdKnihy = V.IdKnihy)
+    where (KdyPujc < current_date - 100)
 ;
 
 --seznam lidi, kteri aktualne maji nektere knihu pujcene dele nez 100 dni
@@ -69,8 +69,8 @@ create view VW_archiv as
   select DatumUdalosti as kdy, (Jmeno || ' ' || Prijmeni) as jmeno_ctenare, 
   idCten as id_ctenare, Jmeno as jmeno_knihy, idKnihy as id_knihy, status as akce, poznamka
     from Archiv 
-    natural join Ctenar
-    natural join Kniha
+    inner join Ctenar using(IdCten)
+    inner join Kniha using (IdKnihy)
 ;
 
 --seznam setrizeny dle poctu pujcovani - resp. vraceni

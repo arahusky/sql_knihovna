@@ -139,6 +139,7 @@ begin
   end if;
 end bef_ins_Hodnoceni;
 /
+--trojslozkovy inx
 
 --vyzkouseni funkcnosti triggeru
 --insert into hodnoceni (IdCten, IdKnihy,Znamka) Values (0,0,20043);

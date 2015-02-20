@@ -103,7 +103,7 @@ create table Vypujcky(
  );
 
 --indexy pres cizi klice (IdCtenare a IdKnihy)
-create index Vypucky_Ctenar_INX on Vypujcky(IdCten);
+--create index Vypucky_Ctenar_INX on Vypujcky(IdCten);
 create index Vypujcky_Kniha_INX on Vypujcky(IdKnihy);
 
 --Tabulka Archiv slouzi jako log udalosti spojenych s pujcovanim knih
